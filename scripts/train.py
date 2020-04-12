@@ -1,3 +1,8 @@
+"""
+Defines ResNet architectures and train on Cifar-10
+
+Block/Stack decomposition is heavily inspired from official TF/Keras implementation of ResNet
+"""
 import tensorflow as tf
 from keras_applications import resnet_common
 
@@ -13,9 +18,6 @@ kwargs = {
     "utils": tf.keras.utils,
     "models": tf.keras.models,
 }
-
-resnet50_original = resnet_common.ResNet50(input_shape=INPUT_SHAPE, weights="imagenet", **kwargs)
-resnet50_original.summary()
 
 
 def evonorm_block_fn(x, filters, kernel_size=3, stride=1,
@@ -80,9 +82,32 @@ def evonorm_stack_fn(x):
     return x
 
 
-model = resnet_common.ResNet(evonorm_stack_fn, False, True, 'resnet50',
-                  include_top=True, weights=None,
-                  input_tensor=None, input_shape=INPUT_SHAPE,
-                  pooling=None, classes=1000,
-                  **kwargs)
-model.summary()
+if __name__ == "__main__":
+    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+    x_train = x_train.astype("float32") / 255.
+    x_test = x_test.astype("float32") / 255.
+    y_train = tf.keras.utils.to_categorical(y_train)
+    y_test = tf.keras.utils.to_categorical(y_test)
+
+    num_classes = 10
+
+    model = resnet_common.ResNet50(
+        input_shape=INPUT_SHAPE,
+        weights=None,
+        classes=num_classes,
+        **kwargs,
+    )
+    model.compile(loss="categorical_crossentropy", optimizer="adam")
+
+    model.fit(tf.keras.preprocessing.image.ImageDataGenerator(rescale=(224, 224, 3)).flow(x_train, y=y_train, batch_size=1), epochs=1, steps_per_epoch=1)
+
+    evonorm_model = resnet_common.ResNet(
+        evonorm_stack_fn, False, True, 'resnet50',
+        include_top=True, weights=None,
+        input_tensor=None, input_shape=INPUT_SHAPE,
+        pooling=None, classes=1000,
+        **kwargs)
+
+    evonorm_model.compile(loss="categorical_crossentropy", optimizer="adam")
+
+    evonorm_model.fit(tf.keras.preprocessing.image.ImageDataGenerator(rescale=(224, 224, 3)).flow(x_train, y=y_train, batch_size=1), epochs=1, steps_per_epoch=1)
