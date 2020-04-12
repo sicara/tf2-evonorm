@@ -11,7 +11,6 @@ def instance_std(x, eps=DEFAULT_EPSILON_VALUE):
 def group_std(inputs, groups=2, eps=DEFAULT_EPSILON_VALUE, axis=-1):
     input_shape = tf.keras.backend.int_shape(inputs)
     tensor_input_shape = tf.shape(inputs)
-    print(tensor_input_shape)
     group_shape = [tensor_input_shape[i] for i in range(len(input_shape))]
     group_shape[axis] = input_shape[axis] // groups
     group_shape.insert(axis, groups)
@@ -25,12 +24,12 @@ def group_std(inputs, groups=2, eps=DEFAULT_EPSILON_VALUE, axis=-1):
 
 
 class EvoNormS0(tf.keras.layers.Layer):
-    def __init__(self):
+    def __init__(self, channels):
         super(EvoNormS0, self).__init__()
 
-        self.gamma = self.add_weight(name="gamma")
-        self.beta = self.add_weight(name="beta")
-        self.v_1 = self.add_weight(name="v1")
+        self.gamma = self.add_weight(name="gamma", shape=(1, 1, channels))
+        self.beta = self.add_weight(name="beta", shape=(1, 1, channels))
+        self.v_1 = self.add_weight(name="v1", shape=(1, 1, channels))
 
     def call(self, inputs, training=True):
         return (inputs * tf.sigmoid(self.v_1 * inputs)) / group_std(inputs) * self.gamma + self.beta
@@ -39,6 +38,6 @@ class EvoNormS0(tf.keras.layers.Layer):
 if __name__ == "__main__":
     model = tf.keras.Sequential([
         tf.keras.layers.Conv2D(input_shape=(416, 416, 3), filters=16, kernel_size=3, padding="same"),
-        EvoNormS0()
+        EvoNormS0(channels=16)
     ])
     model.summary()
