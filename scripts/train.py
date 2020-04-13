@@ -90,16 +90,16 @@ if __name__ == "__main__":
     y_test = tf.keras.utils.to_categorical(y_test)
 
     num_classes = 10
+    batch_size = 64
+    epochs = 30
 
-    model = resnet_common.ResNet50(
-        input_shape=INPUT_SHAPE,
-        weights=None,
-        classes=num_classes,
-        **kwargs,
-    )
-    model.compile(loss="categorical_crossentropy", optimizer="adam")
+    def scheduler(epoch):
+        if epoch < 10:
+            return 0.001
+        else:
+            return 0.001 * tf.math.exp(0.1 * (10 - epoch))
 
-    model.fit(tf.keras.preprocessing.image.ImageDataGenerator(rescale=(224, 224, 3)).flow(x_train, y=y_train, batch_size=1), epochs=1, steps_per_epoch=1)
+    lr_scheduler_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
     evonorm_model = resnet_common.ResNet(
         evonorm_stack_fn, False, True, 'resnet50',
@@ -110,4 +110,26 @@ if __name__ == "__main__":
 
     evonorm_model.compile(loss="categorical_crossentropy", optimizer="adam")
 
-    evonorm_model.fit(tf.keras.preprocessing.image.ImageDataGenerator(rescale=(224, 224, 3)).flow(x_train, y=y_train, batch_size=1), epochs=1, steps_per_epoch=1)
+    evonorm_model.fit(
+        tf.keras.preprocessing.image.ImageDataGenerator(
+            rescale=(224, 224, 3)
+        ).flow(x_train, y=y_train, batch_size=batch_size),
+        epochs=epochs,
+        callbacks=[tf.keras.callbacks.TensorBoard("logs/resnet_evonorm"), lr_scheduler_callback],
+    )
+
+    model = resnet_common.ResNet50(
+        input_shape=INPUT_SHAPE,
+        weights=None,
+        classes=num_classes,
+        **kwargs,
+    )
+    model.compile(loss="categorical_crossentropy", optimizer="adam")
+
+    model.fit(
+        tf.keras.preprocessing.image.ImageDataGenerator(
+            rescale=(224, 224, 3)
+        ).flow(x_train, y=y_train, batch_size=batch_size),
+        epochs=epochs,
+        callbacks=[tf.keras.callbacks.TensorBoard("logs/resnet50"), lr_scheduler_callback]
+    )
