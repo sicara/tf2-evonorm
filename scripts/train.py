@@ -108,7 +108,7 @@ if __name__ == "__main__":
         pooling=None, classes=1000,
         **kwargs)
 
-    evonorm_model.compile(loss="categorical_crossentropy", optimizer="sgd")
+    evonorm_model.compile(loss="categorical_crossentropy", optimizer="sgd", metrics=["accuracy"])
 
     evonorm_model.fit(
         tf.keras.preprocessing.image.ImageDataGenerator(
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         classes=num_classes,
         **kwargs,
     )
-    model.compile(loss="categorical_crossentropy", optimizer="adam")
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     model.fit(
         tf.keras.preprocessing.image.ImageDataGenerator(
