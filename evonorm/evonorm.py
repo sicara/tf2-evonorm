@@ -23,6 +23,10 @@ def group_std(inputs, groups=2, eps=DEFAULT_EPSILON_VALUE, axis=-1):
     return tf.reshape(std, tensor_input_shape)
 
 
+class EvoNormB0(tf.keras.layers.Layer):
+    pass
+
+
 class EvoNormS0(tf.keras.layers.Layer):
     def __init__(self, channels):
         super(EvoNormS0, self).__init__()
