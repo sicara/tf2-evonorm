@@ -25,7 +25,30 @@ def group_std(inputs, groups=32, eps=DEFAULT_EPSILON_VALUE, axis=-1):
 
 
 class EvoNormB0(tf.keras.layers.Layer):
-    pass
+    def __init__(self, channels, momentum=0.9, epsilon=DEFAULT_EPSILON_VALUE):
+        super(EvoNormB0, self).__init__()
+
+        self.momentum = momentum
+        self.epsilon = epsilon
+
+        self.gamma = self.add_weight(name="gamma", shape=(1, 1, 1, channels), initializer=tf.initializers.Ones())
+        self.beta = self.add_weight(name="beta", shape=(1, 1, 1, channels), initializer=tf.initializers.Zeros())
+        self.v_1 = self.add_weight(name="v1", shape=(1, 1, 1, channels), initializer=tf.initializers.Ones())
+
+        self.running_average_std = tf.Variable(trainable=False)
+
+    def call(self, inputs, training=True):
+        var = self.running_average_std
+        if training:
+            var = tf.nn.moments(inputs, axis=[0, 1, 2], keepdims=True)
+            self.running_average_std = self.momentum * self.running_average_std + (1 - self.momentum) * var
+
+        denominator = tf.maximum(
+            instance_std(inputs) + self.v_1 * inputs,
+            tf.sqrt(var + self.epsilon),
+        )
+        return inputs * self.gamma / denominator + self.beta
+
 
 class EvoNormS0(tf.keras.layers.Layer):
     def __init__(self, channels, groups=8):

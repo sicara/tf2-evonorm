@@ -19,7 +19,7 @@ from tensorflow.keras.layers import (
 from tensorflow.keras.models import Model
 from tensorflow.keras.regularizers import l2
 
-from evonorm.evonorm import EvoNormS0
+from evonorm.evonorm import EvoNormS0, EvoNormB0
 
 ROW_AXIS = 1
 COL_AXIS = 2
@@ -102,6 +102,25 @@ def _evonorms0_conv(**conv_params):
 
     return f
 
+def _evonormb0_conv(**conv_params):
+    """Helper to build a EvonormS0 -> conv block."""
+    filters = conv_params["filters"]
+    kernel_size = conv_params["kernel_size"]
+    strides = conv_params.setdefault("strides", (1, 1))
+    kernel_initializer = conv_params.setdefault("kernel_initializer", "he_normal")
+    padding = conv_params.setdefault("padding", "same")
+    kernel_regularizer = conv_params.setdefault("kernel_regularizer", l2(1.e-4))
+
+
+    def f(input):
+        activation = EvoNormB0(channels=input.shape[-1])(input)
+        return Conv2D(filters=filters, kernel_size=kernel_size,
+                      strides=strides, padding=padding,
+                      kernel_initializer=kernel_initializer,
+                      kernel_regularizer=kernel_regularizer)(activation)
+
+    return f
+
 
 def _conv_evonorms0(**conv_params):
     """Helper to build a conv -> EvonormS0 block."""
@@ -118,6 +137,25 @@ def _conv_evonorms0(**conv_params):
                       kernel_initializer=kernel_initializer,
                       kernel_regularizer=kernel_regularizer)(input)
         return EvoNormS0(channels=filters)(conv)
+
+    return f
+
+
+def _conv_evonormb0(**conv_params):
+    """Helper to build a conv -> EvonormS0 block."""
+    filters = conv_params["filters"]
+    kernel_size = conv_params["kernel_size"]
+    strides = conv_params.setdefault("strides", (1, 1))
+    kernel_initializer = conv_params.setdefault("kernel_initializer", "he_normal")
+    padding = conv_params.setdefault("padding", "same")
+    kernel_regularizer = conv_params.setdefault("kernel_regularizer", l2(1.e-4))
+
+    def f(input):
+        conv = Conv2D(filters=filters, kernel_size=kernel_size,
+                      strides=strides, padding=padding,
+                      kernel_initializer=kernel_initializer,
+                      kernel_regularizer=kernel_regularizer)(input)
+        return EvoNormB0(channels=filters)(conv)
 
     return f
 

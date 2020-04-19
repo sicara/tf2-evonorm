@@ -45,6 +45,21 @@ if __name__ == "__main__":
         ],
     )
 
+    evonorm_b0_model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=EVONORM_B0_NAME)
+    evonorm_b0_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+
+    evonorm_b0_model.fit(
+        x_train,
+        y=y_train,
+        validation_data=(x_test, y_test),
+        batch_size=batch_size,
+        epochs=epochs,
+        callbacks=[
+            tf.keras.callbacks.TensorBoard("logs/resnet_evonorm"),
+            tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm", monitor="val_loss", save_best_only=True)
+        ],
+    )
+
     model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=BATCH_NORM_NAME)
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
