@@ -8,15 +8,6 @@ def instance_std(x, eps=DEFAULT_EPSILON_VALUE):
     return tf.sqrt(var + eps)
 
 
-# def group_std(x, groups=32, eps=1e-5):
-#     N, H, W, C = tf.shape(x)
-#     x = tf.reshape(x, [N, H, W, groups, C // groups])
-#     _, var = tf.nn.moments(x, [1, 2, 4], keepdims=True)
-#     std = tf.sqrt(var + eps)
-#     std = tf.broadcast_to(std, x.shape)
-#     return tf.reshape(std, (N, H, W, C))
-
-
 def group_std(inputs, groups=32, eps=DEFAULT_EPSILON_VALUE, axis=-1):
     groups = min(inputs.shape[axis], groups)
 
@@ -42,17 +33,22 @@ class EvoNormS0(tf.keras.layers.Layer):
 
         self.groups = groups
 
-        self.gamma = self.add_weight(name="gamma", shape=(1, 1, 1, channels), initializer=tf.initializers.Constant(1.))
-        self.beta = self.add_weight(name="beta", shape=(1, 1, 1, channels), initializer=tf.initializers.Constant(0.))
-        self.v_1 = self.add_weight(name="v1", shape=(1, 1, 1, channels), initializer=tf.initializers.Constant(1.))
+        self.gamma = self.add_weight(name="gamma", shape=(1, 1, 1, channels), initializer=tf.initializers.Ones())
+        self.beta = self.add_weight(name="beta", shape=(1, 1, 1, channels), initializer=tf.initializers.Zeros())
+        self.v_1 = self.add_weight(name="v1", shape=(1, 1, 1, channels), initializer=tf.initializers.Ones())
 
     def call(self, inputs, training=True):
         return (inputs * tf.sigmoid(self.v_1 * inputs)) / group_std(inputs, groups=self.groups) * self.gamma + self.beta
 
+    def get_config(self):
+        config = {'group': self.groups,}
+        base_config = super(EvoNormS0, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
 
 if __name__ == "__main__":
     model = tf.keras.Sequential([
-        tf.keras.layers.Conv2D(input_shape=(416, 416, 3), filters=32, kernel_size=3, padding="same"),
-        EvoNormS0(channels=32, groups=16)
+        tf.keras.layers.Conv2D(input_shape=(32, 32, 3), filters=16, kernel_size=(3, 3)),
+        EvoNormS0(channels=16, groups=8)
     ])
     model.summary()

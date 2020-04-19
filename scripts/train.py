@@ -30,16 +30,8 @@ if __name__ == "__main__":
     batch_size = 64
     epochs = 30
 
-    def scheduler(epoch):
-        if epoch < 10:
-            return 0.001
-        else:
-            return 0.001 * tf.math.exp(0.1 * (10 - epoch))
-
-    lr_scheduler_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
-
     evonorm_model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=EVONORM_S0_NAME)
-    evonorm_model.compile(loss="categorical_crossentropy", optimizer="sgd", metrics=["accuracy"])
+    evonorm_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     evonorm_model.fit(
         x_train,
@@ -49,7 +41,6 @@ if __name__ == "__main__":
         epochs=epochs,
         callbacks=[
             tf.keras.callbacks.TensorBoard("logs/resnet_evonorm"),
-            lr_scheduler_callback,
             tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm", monitor="val_loss", save_best_only=True)
         ],
     )
@@ -64,9 +55,8 @@ if __name__ == "__main__":
         batch_size=batch_size,
         epochs=epochs,
         callbacks=[
-            tf.keras.callbacks.TensorBoard("logs/resnet_evonorm"),
-            lr_scheduler_callback,
-            tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm", monitor="val_loss", save_best_only=True)
+            tf.keras.callbacks.TensorBoard("logs/resnet"),
+            tf.keras.callbacks.ModelCheckpoint("models/resnet", monitor="val_loss", save_best_only=True)
         ],
     )
 
