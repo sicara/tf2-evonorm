@@ -21,7 +21,7 @@ def group_std(inputs, groups=32, eps=DEFAULT_EPSILON_VALUE, axis=-1):
     groups = min(inputs.shape[axis], groups)
 
     input_shape = tf.shape(inputs)
-    group_shape = [input_shape[i] for i in range(len(input_shape))]
+    group_shape = [input_shape[i] for i in range(4)]
     group_shape[axis] = input_shape[axis] // groups
     group_shape.insert(axis, groups)
     group_shape = tf.stack(group_shape)
