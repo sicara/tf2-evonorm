@@ -25,12 +25,21 @@ ROW_AXIS = 1
 COL_AXIS = 2
 CHANNEL_AXIS = 3
 
+BATCH_NORM_NAME = "BN"
+EVONORM_S0_NAME = "EvonormS0"
+EVONORM_B0_NAME = "EvonormB0"
+
 
 def _bn_relu(input):
     """Helper to build a BN -> relu block
     """
     norm = BatchNormalization(axis=CHANNEL_AXIS)(input)
     return Activation("relu")(norm)
+
+def _evonorm_S0(input):
+    """Helper to build a BN -> relu block
+    """
+    return EvoNormS0(channels=input.shape[-1])(input)
 
 
 def _conv_bn_relu(**conv_params):
@@ -191,7 +200,7 @@ def _get_block(identifier):
 
 class ResnetBuilder(object):
     @staticmethod
-    def build(input_shape, num_outputs, block_fn, repetitions):
+    def build(input_shape, num_outputs, repetitions, block_fn_name=BATCH_NORM_NAME):
         """Builds a custom ResNet like architecture.
         Args:
             input_shape: The input shape in the form (nb_channels, nb_rows, nb_cols)
@@ -206,11 +215,25 @@ class ResnetBuilder(object):
         if len(input_shape) != 3:
             raise Exception("Input shape should be a tuple (nb_channels, nb_rows, nb_cols)")
 
+        if block_fn_name not in [BATCH_NORM_NAME, EVONORM_S0_NAME, EVONORM_B0_NAME]:
+            raise ValueError(f"block_fn_name should take value in ['{BATCH_NORM_NAME}', '{EVONORM_S0_NAME}', '{EVONORM_B0_NAME}'].")
+
+        block_fn = basic_block
+        initial_conv_block = _conv_bn_relu
+        last_activation = _bn_relu
+        if block_fn_name == EVONORM_S0_NAME:
+            block_fn = evonorm_basic_block
+            initial_conv_block = _evonorms0_conv
+            last_activation = _evonorm_S0
+        elif block_fn_name == EVONORM_B0_NAME:
+            raise NotImplementedError("EvonormB0 is not yet implemented.")
+
+
         # Load function from str if needed.
         block_fn = _get_block(block_fn)
 
         input = Input(shape=input_shape)
-        conv1 = _conv_bn_relu(filters=64, kernel_size=(7, 7), strides=(2, 2))(input)
+        conv1 = initial_conv_block(filters=64, kernel_size=(7, 7), strides=(2, 2))(input)
         pool1 = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")(conv1)
 
         block = pool1
@@ -220,7 +243,7 @@ class ResnetBuilder(object):
             filters *= 2
 
         # Last activation
-        block = _bn_relu(block)
+        block = last_activation(block)
 
         # Classifier block
         block_shape = K.int_shape(block)
@@ -234,15 +257,15 @@ class ResnetBuilder(object):
         return model
 
     @staticmethod
-    def build_resnet_18(input_shape, num_outputs):
-        return ResnetBuilder.build(input_shape, num_outputs, basic_block, [2, 2, 2, 2])
+    def build_resnet_18(input_shape, num_outputs, block_fn_name=BATCH_NORM_NAME):
+        return ResnetBuilder.build(input_shape, num_outputs, [2, 2, 2, 2], block_fn_name=block_fn_name)
 
     @staticmethod
-    def build_resnet_34(input_shape, num_outputs):
-        return ResnetBuilder.build(input_shape, num_outputs, basic_block, [3, 4, 6, 3])
+    def build_resnet_34(input_shape, num_outputs, block_fn_name=BATCH_NORM_NAME):
+        return ResnetBuilder.build(input_shape, num_outputs, [3, 4, 6, 3], block_fn_name=block_fn_name)
 
 
 if __name__ == "__main__":
     num_classes = 10
-    model = ResnetBuilder.build_resnet_18((224, 224, 3), num_classes)
+    model = ResnetBuilder.build_resnet_18((224, 224, 3), num_classes, block_fn_name=EVONORM_S0_NAME)
     model.summary()
