@@ -3,13 +3,12 @@ Defines ResNet architectures and train on Cifar-10
 
 Block/Stack decomposition is heavily inspired from official TF/Keras implementation of ResNet
 """
-import numpy as np
 import tensorflow as tf
 
 from scripts.resnet import ResnetBuilder, BATCH_NORM_NAME, EVONORM_S0_NAME
 
 
-INPUT_SHAPE = (224, 224, 3)
+INPUT_SHAPE = (32, 32, 3)
 
 
 kwargs = {
@@ -40,44 +39,34 @@ if __name__ == "__main__":
     lr_scheduler_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
     evonorm_model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=EVONORM_S0_NAME)
-
     evonorm_model.compile(loss="categorical_crossentropy", optimizer="sgd", metrics=["accuracy"])
 
     evonorm_model.fit(
-        # tf.keras.preprocessing.image.ImageDataGenerator(
-        #     rescale=(224, 224, 3)
-        # ).flow(x_train, y=y_train, batch_size=batch_size),
-        # validation_data=tf.keras.preprocessing.image.ImageDataGenerator(
-        #     rescale=(224, 224, 3)
-        # ).flow(x_test, y=y_test, batch_size=batch_size),
-        # epochs=epochs,
-        # callbacks=[
-        #     tf.keras.callbacks.TensorBoard("logs/resnet_evonorm"),
-        #     lr_scheduler_callback,
-        #     tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm", monitor="val_loss", save_best_only=True)
-        # ],
-        np.random.random((128, *INPUT_SHAPE)),
-        np.zeros((128, num_classes)),
-        batch_size=16
-
+        x_train,
+        y=y_train,
+        validation_data=(x_test, y_test),
+        batch_size=batch_size,
+        epochs=epochs,
+        callbacks=[
+            tf.keras.callbacks.TensorBoard("logs/resnet_evonorm"),
+            lr_scheduler_callback,
+            tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm", monitor="val_loss", save_best_only=True)
+        ],
     )
 
     model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=BATCH_NORM_NAME)
-
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     model.fit(
-        tf.keras.preprocessing.image.ImageDataGenerator(
-            rescale=(224, 224, 3)
-        ).flow(x_train, y=y_train, batch_size=batch_size),
-        validation_data=tf.keras.preprocessing.image.ImageDataGenerator(
-            rescale=(224, 224, 3)
-        ).flow(x_test, y=y_test, batch_size=batch_size),
+        x_train,
+        y=y_train,
+        validation_data=(x_test, y_test),
+        batch_size=batch_size,
         epochs=epochs,
         callbacks=[
-            tf.keras.callbacks.TensorBoard("logs/resnet50"),
+            tf.keras.callbacks.TensorBoard("logs/resnet_evonorm"),
             lr_scheduler_callback,
-            tf.keras.callbacks.ModelCheckpoint("models/resnet", monitor="val_loss", save_best_only=True)
-        ]
+            tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm", monitor="val_loss", save_best_only=True)
+        ],
     )
 
