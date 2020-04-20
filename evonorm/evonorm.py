@@ -35,18 +35,20 @@ class EvoNormB0(tf.keras.layers.Layer):
         self.beta = self.add_weight(name="beta", shape=(1, 1, 1, channels), initializer=tf.initializers.Zeros())
         self.v_1 = self.add_weight(name="v1", shape=(1, 1, 1, channels), initializer=tf.initializers.Ones())
 
-        self.running_average_std = tf.Variable(trainable=False)
+        self.running_average_std = self.add_variable(trainable=False, shape=(1, 1, 1, channels), initializer=tf.initializers.Ones())
 
     def call(self, inputs, training=True):
         var = self.running_average_std
         if training:
-            var = tf.nn.moments(inputs, axis=[0, 1, 2], keepdims=True)
-            self.running_average_std = self.momentum * self.running_average_std + (1 - self.momentum) * var
+            _, var = tf.nn.moments(inputs, [0, 1, 2], keepdims=True)
+            self.running_average_std.assign(self.momentum * self.running_average_std + (1 - self.momentum) * var)
+        else:
+            pass
 
         denominator = tf.maximum(
             instance_std(inputs) + self.v_1 * inputs,
             tf.sqrt(var + self.epsilon),
-        )
+            )
         return inputs * self.gamma / denominator + self.beta
 
 

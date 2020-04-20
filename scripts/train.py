@@ -5,7 +5,7 @@ Block/Stack decomposition is heavily inspired from official TF/Keras implementat
 """
 import tensorflow as tf
 
-from scripts.resnet import ResnetBuilder, BATCH_NORM_NAME, EVONORM_S0_NAME
+from scripts.resnet import ResnetBuilder, BATCH_NORM_NAME, EVONORM_S0_NAME, EVONORM_B0_NAME
 
 
 INPUT_SHAPE = (32, 32, 3)
@@ -30,21 +30,6 @@ if __name__ == "__main__":
     batch_size = 64
     epochs = 30
 
-    evonorm_model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=EVONORM_S0_NAME)
-    evonorm_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-
-    evonorm_model.fit(
-        x_train,
-        y=y_train,
-        validation_data=(x_test, y_test),
-        batch_size=batch_size,
-        epochs=epochs,
-        callbacks=[
-            tf.keras.callbacks.TensorBoard("logs/resnet_evonorm"),
-            tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm", monitor="val_loss", save_best_only=True)
-        ],
-    )
-
     evonorm_b0_model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=EVONORM_B0_NAME)
     evonorm_b0_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
@@ -55,8 +40,23 @@ if __name__ == "__main__":
         batch_size=batch_size,
         epochs=epochs,
         callbacks=[
-            tf.keras.callbacks.TensorBoard("logs/resnet_evonorm"),
-            tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm", monitor="val_loss", save_best_only=True)
+            tf.keras.callbacks.TensorBoard("logs/resnet_evonorm_b0"),
+            tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm_b0", monitor="val_loss", save_best_only=True)
+        ],
+    )
+
+    evonorm_model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=EVONORM_S0_NAME)
+    evonorm_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+
+    evonorm_model.fit(
+        x_train,
+        y=y_train,
+        validation_data=(x_test, y_test),
+        batch_size=batch_size,
+        epochs=epochs,
+        callbacks=[
+            tf.keras.callbacks.TensorBoard("logs/resnet_evonorm_s0"),
+            tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm_s0", monitor="val_loss", save_best_only=True)
         ],
     )
 

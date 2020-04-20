@@ -42,6 +42,12 @@ def _evonorm_S0(input):
     return EvoNormS0(channels=input.shape[-1])(input)
 
 
+def _evonorm_B0(input):
+    """Helper to build a BN -> relu block
+    """
+    return EvoNormB0(channels=input.shape[-1])(input)
+
+
 def _conv_bn_relu(**conv_params):
     """Helper to build a conv -> BN -> relu block
     """
@@ -223,8 +229,12 @@ def basic_block(filters, init_strides=(1, 1), is_first_block_of_first_layer=Fals
     return f
 
 
-def evonorm_basic_block(filters, init_strides=(1, 1), is_first_block_of_first_layer=False):
-    return basic_block(filters, init_strides=init_strides, is_first_block_of_first_layer=is_first_block_of_first_layer, block=_evonorms0_conv)
+def evonorm_basic_block(filters, init_strides=(1, 1), is_first_block_of_first_layer=False, block_fn=_evonorms0_conv):
+    return basic_block(filters, init_strides=init_strides, is_first_block_of_first_layer=is_first_block_of_first_layer, block=block_fn)
+
+
+def evonorm_b0_basic_block(filters, init_strides=(1, 1), is_first_block_of_first_layer=False):
+    return basic_block(filters, init_strides=init_strides, is_first_block_of_first_layer=is_first_block_of_first_layer, block=_evonormb0_conv)
 
 
 def _get_block(identifier):
@@ -264,7 +274,9 @@ class ResnetBuilder(object):
             initial_conv_block = _evonorms0_conv
             last_activation = _evonorm_S0
         elif block_fn_name == EVONORM_B0_NAME:
-            raise NotImplementedError("EvonormB0 is not yet implemented.")
+            block_fn = evonorm_b0_basic_block
+            initial_conv_block = _evonormb0_conv
+            last_activation = _evonorm_B0
 
 
         # Load function from str if needed.
