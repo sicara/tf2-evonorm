@@ -20,15 +20,21 @@ kwargs = {
 
 
 if __name__ == "__main__":
-    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+    dataset_name = "CIFAR10"
+    is_dataset_cifar_10 = dataset_name == "CIFAR10"
+
+    dataset = tf.keras.datasets.cifar10 if is_dataset_cifar_10 else tf.keras.datasets.cifar100
+    (x_train, y_train), (x_test, y_test) = dataset.load_data()
+    num_classes = 10 if is_dataset_cifar_10 else 100
+
+
     x_train = x_train.astype("float32") / 255.
     x_test = x_test.astype("float32") / 255.
-    y_train = tf.keras.utils.to_categorical(y_train)
-    y_test = tf.keras.utils.to_categorical(y_test)
+    y_train = tf.keras.utils.to_categorical(y_train, num_classes=num_classes)
+    y_test = tf.keras.utils.to_categorical(y_test, num_classes=num_classes)
 
-    num_classes = 10
     batch_size = 64
-    epochs = 30
+    epochs = 45
 
     evonorm_b0_model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=EVONORM_B0_NAME)
     evonorm_b0_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
@@ -39,10 +45,7 @@ if __name__ == "__main__":
         validation_data=(x_test, y_test),
         batch_size=batch_size,
         epochs=epochs,
-        callbacks=[
-            tf.keras.callbacks.TensorBoard("logs/resnet_evonorm_b0"),
-            tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm_b0", monitor="val_loss", save_best_only=True)
-        ],
+        callbacks=[tf.keras.callbacks.TensorBoard(f"logs/{dataset_name}/resnet_evonorm_b0")],
     )
 
     evonorm_model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=EVONORM_S0_NAME)
@@ -54,10 +57,7 @@ if __name__ == "__main__":
         validation_data=(x_test, y_test),
         batch_size=batch_size,
         epochs=epochs,
-        callbacks=[
-            tf.keras.callbacks.TensorBoard("logs/resnet_evonorm_s0"),
-            tf.keras.callbacks.ModelCheckpoint("models/resnet_evonorm_s0", monitor="val_loss", save_best_only=True)
-        ],
+        callbacks=[tf.keras.callbacks.TensorBoard(f"logs/{dataset_name}/resnet_evonorm_s0")],
     )
 
     model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=BATCH_NORM_NAME)
@@ -69,9 +69,6 @@ if __name__ == "__main__":
         validation_data=(x_test, y_test),
         batch_size=batch_size,
         epochs=epochs,
-        callbacks=[
-            tf.keras.callbacks.TensorBoard("logs/resnet"),
-            tf.keras.callbacks.ModelCheckpoint("models/resnet", monitor="val_loss", save_best_only=True)
-        ],
+        callbacks=[tf.keras.callbacks.TensorBoard(f"logs/{dataset_name}/resnet")],
     )
 
