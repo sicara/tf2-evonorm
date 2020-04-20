@@ -36,39 +36,45 @@ if __name__ == "__main__":
     batch_size = 64
     epochs = 45
 
+    data_generator = tf.keras.preprocessing.image.ImageDataGenerator(
+        rotation_range=10,
+        horizontal_flip=True,
+        zoom_range=0.1,
+    )
+
     evonorm_b0_model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=EVONORM_B0_NAME)
     evonorm_b0_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     evonorm_b0_model.fit(
-        x_train,
-        y=y_train,
+        data_generator.flow(x_train, y_train, batch_size=batch_size),
+        steps_per_epoch=len(x_train) // batch_size,
         validation_data=(x_test, y_test),
-        batch_size=batch_size,
         epochs=epochs,
         callbacks=[tf.keras.callbacks.TensorBoard(f"logs/{dataset_name}/resnet_evonorm_b0")],
+        shuffle=True,
     )
 
     evonorm_model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=EVONORM_S0_NAME)
     evonorm_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     evonorm_model.fit(
-        x_train,
-        y=y_train,
+        data_generator.flow(x_train, y_train, batch_size=batch_size),
+        steps_per_epoch=len(x_train) // batch_size,
         validation_data=(x_test, y_test),
-        batch_size=batch_size,
         epochs=epochs,
         callbacks=[tf.keras.callbacks.TensorBoard(f"logs/{dataset_name}/resnet_evonorm_s0")],
+        shuffle=True,
     )
 
     model = ResnetBuilder.build_resnet_18(INPUT_SHAPE, num_classes, block_fn_name=BATCH_NORM_NAME)
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     model.fit(
-        x_train,
-        y=y_train,
+        data_generator.flow(x_train, y_train, batch_size=batch_size),
+        steps_per_epoch=len(x_train) // batch_size,
         validation_data=(x_test, y_test),
-        batch_size=batch_size,
         epochs=epochs,
         callbacks=[tf.keras.callbacks.TensorBoard(f"logs/{dataset_name}/resnet")],
+        shuffle=True,
     )
 
