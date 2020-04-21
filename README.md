@@ -19,8 +19,8 @@ If you want to launch the training, you will need to install [Click](https://cli
 
 ## EvoNorm S0
 
-<img src="./assets/evonorm-s0.png" width="300" height="300" />
+<img src="./assets/evonorm-s0.png" width="500" height="300" />
 
 ## EvoNorm B0
 
-<img src="./assets/evonorm-b0.png" width="300" height="300" />
+<img src="./assets/evonorm-b0.png" width="500" height="300" />
