@@ -12,7 +12,7 @@ All TensorBoards logs are available [here](https://tensorboard.dev/experiment/Qm
 
 ## Requirements
 
-![Tensorflow Versions](https://img.shields.io/badge/tensorflow-2.x-blue.svg)
+![Tensorflow Versions](https://img.shields.io/badge/TensorFlow-2.x-blue)
 
 If you want to launch the training, you will need to install [Click](https://click.palletsprojects.com/en/7.x/) and
 [Loguru](https://github.com/Delgan/loguru).
